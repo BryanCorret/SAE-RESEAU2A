@@ -1,25 +1,66 @@
 package SRC;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.util.Scanner;
+
 public class Client{
-
+    
     private String nom;
-    private String password;
+    private Socket socket;
 
-    public Client(String nom, String password){
-        this.nom = nom;
-        this.password = password;
+
+    public Client(String nom, String ip) {
+        try{
+            this.nom = nom;
+            socket = new Socket(ip, 6500);
+
+        } catch (IOException exception) {
+            System.out.println(exception);
+        }
     }
 
-    public String getNom(){
-        return this.nom;
+    public String getNom() {
+        return nom;
     }
 
-    public String getPassword(){
-        return this.password;
+    public Socket getSocket() {
+        return socket;
     }
+
 
     @Override
-    public String toString(){
-        return "Client [nom=" + nom + ", password=" + password + "]";
+    public String toString() {
+        return "Client " + nom;
     }
 
+
+
+    public void ecrireMessage() throws IOException {
+        // demander un message a l'utilisateur
+        Scanner sc = new Scanner(System.in);
+        String message = sc.nextLine();
+        System.out.println("Message : " + message);
+        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+        out.writeUTF(message);
+        out.flush();
+    }
+
+    public static void main(String[] args) {
+        try {
+            Scanner sc = new Scanner(System.in);
+            System.out.println("Entrer l'ip du serveur : ");
+            String ip = sc.nextLine();
+            Client client = new Client("client1", ip);
+
+            System.out.println(client);
+
+            while (true)
+            client.ecrireMessage();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
