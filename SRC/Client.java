@@ -41,26 +41,30 @@ public class Client{
         // demander un message a l'utilisateur
         Scanner sc = new Scanner(System.in);
         String message = sc.nextLine();
-        System.out.println("Message : " + message);
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-        out.writeUTF(message);
+        out.writeUTF(this.nom+"/"+message);
         out.flush();
+        sc.close();
     }
 
     public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
         try {
-            Scanner sc = new Scanner(System.in);
             System.out.println("Entrer l'ip du serveur : ");
             String ip = sc.nextLine();
-            Client client = new Client("client1", ip);
+            System.out.println("Entrer votre pseudo ");
+            String pseudo = sc.nextLine();
+            Client client = new Client(pseudo, ip);
 
             System.out.println(client);
 
-            while (true)
-            client.ecrireMessage();
+            while (true) {
+                client.ecrireMessage();
+            }
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+        sc.close();
     }
 }

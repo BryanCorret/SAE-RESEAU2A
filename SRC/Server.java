@@ -15,18 +15,16 @@ public class Server {
 
         while (true) {
             // accepter la connexion du client
-            Socket client = ss.accept(); 
+            Socket socketClient = ss.accept(); 
             // créer un hash map pour stocker le client et son nom
             HashMap<Socket, String> Hashclient = new HashMap<Socket, String>();
-            Hashclient.put(client, "client");
+            Hashclient.put(socketClient, "client");
             // ajouter le client dans la liste des clients
             ListClient.add(Hashclient);
 
             // créer un thread pour le client
-            Thread thread = new Thread(new ClientHandler(ListClient,client));
+            Thread thread = new Thread(new ClientHandler(ListClient,socketClient));
             thread.start();
-
-
         }
 
     }

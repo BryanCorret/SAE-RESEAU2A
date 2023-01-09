@@ -1,7 +1,6 @@
 package SRC;
 
 import java.io.DataInputStream;
-import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
@@ -28,23 +27,33 @@ public class ClientHandler implements Runnable {
 
                     DataInputStream in = new DataInputStream(this.socket.getInputStream()); // lire le message du client
                     message = in.readUTF(); // lire le message du client
-                    System.out.println("client : " + message); // afficher le message du client
+
+                    // récupération du pseudo
+                    String pseudo = "";
+                    int i = 0;
+                    while (message.charAt(i) != '/') {
+                        pseudo += message.charAt(i);
+                        i++;
+                    }
+                    
+                    // récupération du message
+                    String msg = message.split("/")[1];
+
+                    System.out.println(pseudo+" : "+msg); // afficher le message du client
                     
                     // envoyer un message a tous les clients
                     
                     for (HashMap<Socket,String> c : ListClient) {
                         Socket keySocket = c.keySet().iterator().next();
                         DataOutputStream out = new DataOutputStream(keySocket.getOutputStream());
-                        out.writeUTF(message);
+                        out.writeUTF(pseudo+" : " + msg);
                         out.flush();
                     }
-                
+
             } catch (IOException e) {
-                    e.printStackTrace();
-                }       
-                
-                
+                e.printStackTrace();
             }
         }
     }
+}
 
