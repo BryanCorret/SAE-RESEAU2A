@@ -1,4 +1,3 @@
-
 import java.net.*;
 import java.io.*;
 import java.util.*;
@@ -163,6 +162,3 @@ public class Client  {
 		scan.close();// ferme la lecture de la console
 		client.deco(); // deconnecte le clien	
 	}
-
-}
-
