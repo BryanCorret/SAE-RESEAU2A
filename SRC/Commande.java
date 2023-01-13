@@ -3,7 +3,6 @@ import java.io.*;
 
 public class Commande implements Serializable {
 
-	// The different types of message sent by the Client
 	// WHO_HERE recevoir la liste des utilisateurs connectés
 	// MESSAGE message privée
 	// LOGOUT se déconnecter
