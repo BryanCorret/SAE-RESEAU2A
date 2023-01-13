@@ -8,7 +8,7 @@ public class Client  {
 	private ObjectOutputStream out;		
 	private Socket socket;					
 	
-	private String server, nomUtilisateur;	
+	private String server, nomUtilisateur, salon;	
 	private int port;					
 
 	public String getNomUtilisateur() {
@@ -18,11 +18,14 @@ public class Client  {
 	public void setNomUtilisateur(String username) {
 		this.nomUtilisateur = username;
 	}
+	public String getSalon(){return this.salon;}
+	public void setSalon(String salon){this.salon = salon;}
 
 	public Client(String server, int port, String nomUtilisateur) {
 		this.server = server;
 		this.nomUtilisateur = nomUtilisateur;
 		this.port = port;
+		this.salon = "";
 	}
 	
 	// démarer le client et commencer a parler
@@ -126,7 +129,7 @@ public class Client  {
 			// Si le nombre d'argument est plus grand que 3 
 			default:
 				System.out.println("Pour rappel l'ordre est comme ça [username] [portNumber] [serverAddress] sans les crochets");
-			return;
+				return;
 		}
 		
 		Client client = new Client(serverAddress, portNumber, userName);
@@ -145,14 +148,37 @@ public class Client  {
 			System.out.print("> ");
 			// Lis le msg 
 			String msg = scan.nextLine();
-			//Si le msg est LOUGOUT permet de se déconnecter
-			if(msg.equals("WHO_HERE") ) {
-				client.envoieMsg(new Commande(Commande.WHO_HERE, ""));	
+			//Si le msg est LOGOUT permet de se déconnecter
+			if(msg.equals("LOGOUT") ) {
+				client.envoieMsg(new Commande(Commande.LOGOUT, ""));	
 				break;
 			}
 			// Si c'est la commande message WHO_HERE permet de savoir qui est présent 
-			else if(msg.equals("LOGOUT")) {
-				client.envoieMsg(new Commande(Commande.LOGOUT, ""));
+			else if(msg.equals("WHO_HERE")) {
+				System.out.print("Dans quelle salon vous les vous savoir ? appuyer sur entrer directement si vous voulez voir indifféremment\n> ");
+				String salon = scan.nextLine();
+				client.envoieMsg(new Commande(Commande.WHO_HERE, salon));
+			}
+			// Si c'est la commande message CREATEROOM permet de créé un salon 
+			else if(msg.equals("CREATEROOM")) {
+				System.out.print("Quelle est le nom du Salon ?\n> ");
+				String salon = scan.nextLine();
+				client.envoieMsg(new Commande(Commande.CREATEROOM, salon));
+			}
+			// Si c'est la commande message JOINROOM permet rejoindre un salon
+			else if(msg.equals("JOINROOM")) {
+				System.out.print("Quelle est le nom du Salon ?\n> ");
+				String salon = scan.nextLine();
+				client.envoieMsg(new Commande(Commande.JOINROOM, salon));
+			}
+			else if(msg.equals("DISPLAYROOM")) {
+				client.envoieMsg(new Commande(Commande.DISPLAYROOM, ""));
+			}
+			// Si c'est la commande message DELETEROOM permet de supprimer un salon
+			else if(msg.equals("DELETEROOM")) {
+				System.out.print("Quelle est le nom du Salon ?\n> ");
+				String salon = scan.nextLine();
+				client.envoieMsg(new Commande(Commande.DELETEROOM, salon));
 			}
 			// msg 
 			else {
@@ -162,3 +188,4 @@ public class Client  {
 		scan.close();// ferme la lecture de la console
 		client.deco(); // deconnecte le clien	
 	}
+}

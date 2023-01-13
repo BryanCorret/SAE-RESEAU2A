@@ -11,7 +11,7 @@ public class Ecoute extends Thread {
     public void run() {
 		while(true) {
 			try {
-				
+
 				String msg = (String) in.readObject(); // lis le msg
 				System.out.println(msg);
 
@@ -26,6 +26,6 @@ public class Ecoute extends Thread {
 				System.out.println("Class pas trouvée " + e2);
 			
             }
-		    }
+		}
 	}
 }
