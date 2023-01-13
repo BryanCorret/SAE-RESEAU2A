@@ -9,6 +9,10 @@ public class Commande implements Serializable {
 	static final int WHO_HERE = 0;
 	static final int MESSAGE = 1;
 	static final int LOGOUT = 2;
+	// static final int CREATEROOM = 3;
+	// static final int DELETEROOM = 4;
+	// static final int JOINROOM = 5;
+
 	private int type;
 	private String message;
 	
