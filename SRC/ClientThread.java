@@ -215,7 +215,7 @@ public class ClientThread extends Thread {
 		catch (Exception e) {}
 	}
 
-	public boolean writeMsg(String msg) { // permet d'envoyer un String au client
+	public boolean writeMsg(String msg) { // permet d'envoyer un String au client en local ( sans passer par le server )
 		if(!socket.isConnected()) {// si le client n'est pas connecter on le déconecte
 			close();
 			return false;
