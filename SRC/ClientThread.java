@@ -98,16 +98,21 @@ public class ClientThread extends Thread {
 			}
 			
 			String message = cm.getMessage(); // on récupère le message
+			
 
 		
 			switch(cm.getType()) { // on récupère le type de message
 
-			case Commande.MESSAGE: // si le message est privée
+			case Commande.MESSAGE: 
+			if (message.equals("")) {
+				writeMsg("Désolé vous n'avez pas entrer de message.");
+			}
+			else {
 				boolean confirmation =  this.server.envoieClient(nomUtilisateur + ": " + message, salon, this);
 				if(!confirmation){
 					writeMsg("Désolé l'utilisateur n'existe pas ou message vide.");
 				}
-				break;
+				break;}
 			case Commande.LOGOUT:
 				print(nomUtilisateur + " s'est déconecter.");
 				keepGoing = false;

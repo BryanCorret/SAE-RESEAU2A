@@ -12,13 +12,16 @@ public class Server {
 	private SimpleDateFormat dateFormat; // pour afficher la date
 	
 	private int port; // le port sur lequel le serveur ecoute
+	private String addresse; // le port sur lequel le serveur ecoute
+
 
 	private boolean running; // pour arreter le serveur
 
 	private ArrayList<String> listeSalon; //la liste des salon
 
-	public Server(int port) {
+	public Server(int port,String addresse) {
 		this.port = port;
+		this.addresse = addresse;
 		dateFormat = new SimpleDateFormat("HH:mm");// la date en hh:mm
 		listClient = new ArrayList<ClientThread>();
 		listeSalon = new ArrayList<String>();
@@ -90,7 +93,7 @@ public class Server {
 	public void stop() {
 		running = false;
 		try {
-			new Socket("localhost", port);
+			new Socket(addresse, port);
 		}
 		catch(Exception e) {
 		}
@@ -107,11 +110,10 @@ public class Server {
 		// ajoute la date
 		String time = dateFormat.format(new Date());
 		
+		if (message.equals("")) {return false;}
 		// verifie si le message est privé 
 		String[] mp = message.split(" ",3);
-
-		if (message.equals("")) {return false;}
-
+		
 		boolean isPrivate = false;
 		if(mp[1].charAt(0)=='@') 
 			isPrivate=true;
@@ -185,25 +187,27 @@ public class Server {
 	public static void main(String[] args) {
 		// on démarre le serveur sur le port 1500 par défault
 		int portNumber = 1500;
+		String addresse = "localhost";
 		switch(args.length) {
 			case 1:
 				try {
 					portNumber = Integer.parseInt(args[0]);
+					addresse = args[1];
+					System.out.println("Le serveur est lancé sur le port: " + portNumber + " et sur l'adresse: " + addresse);
 				}
 				catch(Exception e) {
 					System.out.println("Le port doit être constituer de numéro.");
-					System.out.println("Rappel pour changer le port par défault faite: > java Server [port] sans les crochets");
+					System.out.println("Rappel pour changer le port par défault faite: > java Server [port] [adresse] sans les crochets");
+					System.out.println("Le serveur est lancé sur le port: " + portNumber + " et sur l'adresse: " + addresse +e);
+
 					return;
 				}
 			case 0:
 				break;
-			default:
-				System.out.println("Rappel pour changer le port par défault faite: java Server [port] sans les crochets");
-				return;
-				
+	
 		}
 		// create a server object and start it
-		Server server = new Server(portNumber);
+		Server server = new Server(portNumber,addresse);
 		server.start();
 	}
 }
