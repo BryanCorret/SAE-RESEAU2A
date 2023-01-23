@@ -8,7 +8,7 @@ public class Client  {
 	private ObjectOutputStream out;		
 	private Socket socket;					
 	
-	private String server, nomUtilisateur;	
+	private String server, nomUtilisateur, salon;	
 	private int port;					
 
 	public String getNomUtilisateur() {
@@ -18,11 +18,14 @@ public class Client  {
 	public void setNomUtilisateur(String username) {
 		this.nomUtilisateur = username;
 	}
+	public String getSalon(){return this.salon;}
+	public void setSalon(String salon){this.salon = salon;}
 
 	public Client(String server, int port, String nomUtilisateur) {
 		this.server = server;
 		this.nomUtilisateur = nomUtilisateur;
 		this.port = port;
+		this.salon = "";
 	}
 	
 	// démarer le client et commencer a parler
@@ -97,39 +100,44 @@ public class Client  {
 		// Par défault  les valeurs
 		int portNumber = 1500;
 		String serverAddress = "localhost";
-		String userName = "Mystere";
+		String username ="";
+		
 		Scanner scan = new Scanner(System.in);
 		
-		System.out.println("Rentré votre pseudo: ");
-		userName = scan.nextLine();
+		while(username == null || username.equals("")) {
+			System.out.println("Rentré votre pseudo: ");
+			username = scan.nextLine();
+			if(username.equals("")) {
+				System.out.println("Vous devez rentrer un pseudo");
+			}
+		}
 
 		// Cas ou il y a l'utilisateur rentre mal les arguments
 		switch(args.length) {
 			case 3:
-				// for > javac Client username portNumber serverAddr
+				// sijavac Client username portNumber serverAddr
 				serverAddress = args[2];
 			case 2:
-				// for > javac Client username portNumber
+				// si  > javac Client username portNumber
 				try {
 					portNumber = Integer.parseInt(args[1]);
 				}
 				catch(Exception e) {
-					System.out.println("Port invalide merci de mettre un nombre");
 					System.out.println("Pour rappel l'ordre est comme ça [username] [portNumber] [serverAddress] sans les crochets");
 					return;
 				}
 			case 1: //
-				userName = args[0];
+				username = args[0];
 			case 0:
 				// cas ou le nombre est plus peti
 				break;
 			// Si le nombre d'argument est plus grand que 3 
 			default:
 				System.out.println("Pour rappel l'ordre est comme ça [username] [portNumber] [serverAddress] sans les crochets");
-			return;
+				return;
 		}
 		
-		Client client = new Client(serverAddress, portNumber, userName);
+		Client client = new Client(serverAddress, portNumber, username);
 		// essaie de connecter sinon on quitte
 		if(!client.start())
 			return;
@@ -145,14 +153,37 @@ public class Client  {
 			System.out.print("> ");
 			// Lis le msg 
 			String msg = scan.nextLine();
-			//Si le msg est LOUGOUT permet de se déconnecter
-			if(msg.equals("WHO_HERE") ) {
-				client.envoieMsg(new Commande(Commande.WHO_HERE, ""));	
+			//Si le msg est LOGOUT permet de se déconnecter
+			if(msg.equals("LOGOUT") ) {
+				client.envoieMsg(new Commande(Commande.LOGOUT, ""));	
 				break;
 			}
 			// Si c'est la commande message WHO_HERE permet de savoir qui est présent 
-			else if(msg.equals("LOGOUT")) {
-				client.envoieMsg(new Commande(Commande.LOGOUT, ""));
+			else if(msg.equals("WHO_HERE")) {
+				System.out.print("Dans quelle salon voulez vous savoir ? appuyer sur entrer directement si vous savoir sur l'addresse choisi \n> ");
+				String salon = scan.nextLine();
+				client.envoieMsg(new Commande(Commande.WHO_HERE, salon));
+			}
+			// Si c'est la commande message CREATEROOM permet de créé un salon 
+			else if(msg.equals("CREATEROOM")) {
+				System.out.print("Quelle est le nom du Salon ?\n> ");
+				String salon = scan.nextLine();
+				client.envoieMsg(new Commande(Commande.CREATEROOM, salon));
+			}
+			// Si c'est la commande message JOINROOM permet rejoindre un salon
+			else if(msg.equals("JOINROOM")) {
+				System.out.print("Quelle est le nom du Salon ?\n> ");
+				String salon = scan.nextLine();
+				client.envoieMsg(new Commande(Commande.JOINROOM, salon));
+			}
+			else if(msg.equals("DISPLAYROOM")) {
+				client.envoieMsg(new Commande(Commande.DISPLAYROOM, ""));
+			}
+			// Si c'est la commande message DELETEROOM permet de supprimer un salon
+			else if(msg.equals("DELETEROOM")) {
+				System.out.print("Quelle est le nom du Salon ?\n> ");
+				String salon = scan.nextLine();
+				client.envoieMsg(new Commande(Commande.DELETEROOM, salon));
 			}
 			// msg 
 			else {
@@ -162,3 +193,4 @@ public class Client  {
 		scan.close();// ferme la lecture de la console
 		client.deco(); // deconnecte le clien	
 	}
+}

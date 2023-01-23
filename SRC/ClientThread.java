@@ -1,9 +1,7 @@
-
 import java.io.*;
 import java.net.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
-
 
 // Permet de faire un thread pour chaque client
 public class ClientThread extends Thread {
@@ -12,8 +10,10 @@ public class ClientThread extends Thread {
 	private ObjectInputStream in;
 	private ObjectOutputStream out;
 	private int id; // le numéro du client
+	private Server server; // le serveur
 	
 	private String nomUtilisateur;
+	private String salon;
 	private Commande cm; // message du client
 	private String date; // en timestamp
 
@@ -21,17 +21,19 @@ public class ClientThread extends Thread {
 	private SimpleDateFormat dateFormat; // pour formater la date
 
 	// CONSTRUCTEUR
-	public ClientThread(Socket socket, int clientid,SimpleDateFormat dateFormat, ArrayList<ClientThread> listClient) {
+	public ClientThread(Socket socket, int clientid,SimpleDateFormat dateFormat, ArrayList<ClientThread> listClient, Server server) {
 		this.id = ++clientid; // l'id
 		this.listClient = listClient;
 		this.socket = socket;
 		this.dateFormat = dateFormat;
+		this.server = server;
+		this.salon = "";
 		try
 		{
 			out = new ObjectOutputStream(socket.getOutputStream());
 			in  = new ObjectInputStream(socket.getInputStream());
 			nomUtilisateur = (String) in.readObject(); // on récupère le nom du client
-			envoieClient(nomUtilisateur + " à rejoint le chat dite lui bienvenue." );
+			this.server.envoieClient(nomUtilisateur + " à rejoint le chat dite lui bienvenue." , "", this);
 		}
 		catch (IOException e) {
 			print("Erreur de création des outputs/input stream " + e);
@@ -39,7 +41,7 @@ public class ClientThread extends Thread {
 		}
 		catch (ClassNotFoundException e) {
 		}
-		date = new Date().toString() + "\n";
+		date = new Date().toString();
 	}
 
 	public void print(String msg) {
@@ -49,6 +51,10 @@ public class ClientThread extends Thread {
 	
 	public String getNomUtilisateur() {
 		return nomUtilisateur;
+	}
+
+	public String getSalon() {
+		return salon;
 	}
 
 	public void setNomUtilisateur(String username) {
@@ -92,96 +98,78 @@ public class ClientThread extends Thread {
 			}
 			
 			String message = cm.getMessage(); // on récupère le message
+			
 
 		
 			switch(cm.getType()) { // on récupère le type de message
 
-			case Commande.MESSAGE: // si le message est privée
-				boolean confirmation =  envoieClient(nomUtilisateur + ": " + message);
-				if(confirmation==false){
-					String msg ="Désolé l'utilisateur n'existe pas.";
-					writeMsg(msg);
+			case Commande.MESSAGE: 
+			if (message.equals("")) {
+				writeMsg("Désolé vous n'avez pas entrer de message.");
+			}
+			else {
+				boolean confirmation =  this.server.envoieClient(nomUtilisateur + ": " + message, salon, this);
+				if(!confirmation){
+					writeMsg("Désolé l'utilisateur n'existe pas ou message vide.");
 				}
-				break;
+				break;}
 			case Commande.LOGOUT:
 				print(nomUtilisateur + " s'est déconecter.");
 				keepGoing = false;
 				break;
 			case Commande.WHO_HERE:
-				writeMsg("Voici la liste des personnes connecter " + dateFormat.format(new Date()) + "\n");
+				writeMsg("Voici la liste des personnes connecter " + dateFormat.format(new Date()));
 
-				for(int i = 0; i < listClient.size(); ++i) { // parcours de la liste des clients
-					ClientThread ct = listClient.get(i);
-					writeMsg((i+1) + ") " + ct.nomUtilisateur + " since " + ct.date);
+				if(message.equals("")) {
+					for(int i = 0; i < listClient.size(); ++i) { // parcours de la liste des clients
+						ClientThread ct = listClient.get(i);
+						writeMsg((i+1) + ") " + ct.nomUtilisateur + " since " + ct.date);
+					}
+				} else {
+					for(int i = 0; i < listClient.size(); ++i) { // parcours de la liste des clients
+						ClientThread ct = listClient.get(i);
+						if(ct.getSalon().equals(message)) {
+							writeMsg((i+1) + ") " + ct.nomUtilisateur + " since " + ct.date);
+						}
+					}
 				}
 				break;
+			case Commande.CREATEROOM:
+				this.server.ajouterSalon(message);
+				writeMsg("le salon a bien été créé");
+				System.out.println(nomUtilisateur+" a créé un salon "+ message);
+				break;
+			case Commande.JOINROOM:
+				if(this.server.getListeSalon().contains(message)) {
+					this.salon = message;
+					System.out.println(nomUtilisateur+" à rejoint le salon "+ message);
+					writeMsg("vous avez rejoint le salon "+ message);
+				} else {
+					System.out.println(nomUtilisateur+ " a essayer de rejoindre un salon qui n'existe pas");
+					writeMsg("Le salon n'existe pas");
+				}
+				break;
+			case Commande.DELETEROOM:
+				if(this.server.getListeSalon().contains(message)) {
+					this.server.getListeSalon().remove(message);
+					this.salon = "";
+					System.out.println(nomUtilisateur+" a supprimé le salon "+message);
+					writeMsg("le salon "+message+" a bien été suprimé");
+				} else {
+					System.out.println(nomUtilisateur+ " a essayer de supprimé un salon qui n'existe pas");
+					writeMsg("Le salon n'existe pas");
+				}
+				break;
+			case Commande.DISPLAYROOM:
+				writeMsg("Voici la liste des salon ouvert :");
+				for (String salon : server.getListeSalon()) {
+					writeMsg("	"+salon);
+				}
 			}
 		}
 		// si l'utilisateur s'est déconnecter on le supprime de la liste
 		remove(id);
 		close();
-	}
-
-
-	
-	private synchronized boolean envoieClient(String message) {
-		// ajoute la date
-		String time = dateFormat.format(new Date());
-		
-		// verifie si le message est privé 
-		String[] mp = message.split(" ",3);
-		
-		boolean isPrivate = false;
-		if(mp[1].charAt(0)=='@') 
-			isPrivate=true;
-		
-		//si le message est privé alors on envoie le message au destinataire
-		if(isPrivate==true)
-		{
-			String tocheck=mp[1].substring(1, mp[1].length()); // on récupere le nom du destinataire
-			
-			message=mp[0]+mp[2]; // on reconstruit le message
-			String messageLf = "(Privé) "+ time + " " + message + "\n"; // on formate le message
-			boolean found=false;
-			
-			for(int y=listClient.size(); --y>=0;) // nous parcourons la liste en sens inverse au cas où nous devrions déconnecter un clier un client
-			{
-				ClientThread ct1=listClient.get(y);
-				String check=ct1.getNomUtilisateur();
-				if(check.equals(tocheck)){
-					// si le destinataire est trouvé on envoie le message
-					if(!ct1.writeMsg(messageLf)) {
-						listClient.remove(y);
-						print("Le client  " + ct1.nomUtilisateur + " est déconnecter . "); // permert de supprimer le client dans le cas ou le terminal et fermer ou CTRL+C
-					}
-					found=true;
-					break;
-				}
-
-			}
-			if(found!=true){
-				return false; 
-			}
-		}
-		// si le message est pour tout le monde
-		else
-		{
-			String messageLf = time + " " + message + "\n";
-			
-			System.out.print(messageLf);
-			
-			// on boucle dans l'ordre inverse si il faudrait supprimer un Client
-			for(int i = listClient.size(); --i >= 0;) {
-				ClientThread ct = listClient.get(i);
-				// on envoie le message à tous les clients si il y a une erreur on supprime le client
-				if(!ct.writeMsg(messageLf)) {
-					listClient.remove(i);
-					print("Le client  " + ct.nomUtilisateur + " est déconnecter . ");
-				}
-			}
-		}
-		return true;
-		
 	}
 
 	public synchronized void remove(int id) {
@@ -197,7 +185,7 @@ public class ClientThread extends Thread {
 				break;
 			}
 		}
-		envoieClient(clientdeco + " à quitte le chat.");
+		this.server.envoieClient(clientdeco + " à quitte le chat.", "", this);
 	}
 	// permet de fermer les flux et le socket
 	private void close() {

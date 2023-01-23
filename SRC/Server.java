@@ -12,15 +12,24 @@ public class Server {
 	private SimpleDateFormat dateFormat; // pour afficher la date
 	
 	private int port; // le port sur lequel le serveur ecoute
+	private String addresse; // le port sur lequel le serveur ecoute
+
 
 	private boolean running; // pour arreter le serveur
 
-	public Server(int port) {
+	private ArrayList<String> listeSalon; //la liste des salon
+
+	public Server(int port,String addresse) {
 		this.port = port;
+		this.addresse = addresse;
 		dateFormat = new SimpleDateFormat("HH:mm");// la date en hh:mm
 		listClient = new ArrayList<ClientThread>();
+		listeSalon = new ArrayList<String>();
 	}
-	
+	public ArrayList<String> getListeSalon(){return this.listeSalon;}
+	public void ajouterSalon(String salon) {
+		this.listeSalon.add(salon);
+	}
 
 	public SimpleDateFormat getDateFormat() {
 		return dateFormat;
@@ -36,7 +45,7 @@ public class Server {
 	public void start() {
 		running = true;
 		// créer un socket serveur et attentles connexions
-		try 
+		try
 		{
 			ServerSocket serverSocket = new ServerSocket(port);// le socket du serveur
 
@@ -50,7 +59,7 @@ public class Server {
 				if(!running)
 					break;
 				
-				ClientThread t = new ClientThread(socket,uniqueId,dateFormat,listClient);// si le serveur est en marche alors créer un thread
+				ClientThread t = new ClientThread(socket,uniqueId,dateFormat,listClient,this);// si le serveur est en marche alors créer un thread
 				// ajoute le client sur le thread
 				listClient.add(t);
 				t.start();
@@ -84,7 +93,7 @@ public class Server {
 	public void stop() {
 		running = false;
 		try {
-			new Socket("localhost", port);
+			new Socket(addresse, port);
 		}
 		catch(Exception e) {
 		}
@@ -97,10 +106,11 @@ public class Server {
 	}
 	
 	// pour envoyer un message à tous les clients
-	private synchronized boolean envoieClient(String message) {
+	public synchronized boolean envoieClient(String message, String salon, ClientThread expediteur) {
 		// ajoute la date
 		String time = dateFormat.format(new Date());
 		
+		if (message.equals("")) {return false;}
 		// verifie si le message est privé 
 		String[] mp = message.split(" ",3);
 		
@@ -114,7 +124,7 @@ public class Server {
 			String tocheck=mp[1].substring(1, mp[1].length()); // on récupere le nom du destinataire
 			
 			message=mp[0]+mp[2]; // on reconstruit le message
-			String messageLf = time + " " + message + "\n"; // on formate le message
+			String messageLf = "(Privé) "+ time + " " + message; // on formate le message
 			boolean found=false;
 			
 			for(int y=listClient.size(); --y>=0;) // nous parcourons la liste en sens inverse au cas où nous devrions déconnecter un clier un client
@@ -132,30 +142,28 @@ public class Server {
 				}
 
 			}
-			if(found!=true){
-				return false; 
-			}
+			return found;
 		}
-		// si le message est pour tout le monde
 		else
 		{
-			String messageLf = time + " " + message + "\n";
+			String messageLf = time + " " + message;
 			
-			System.out.print(messageLf);
+			System.out.println(messageLf);
 			
 			// on boucle dans l'ordre inverse si il faudrait supprimer un Client
 			for(int i = listClient.size(); --i >= 0;) {
 				ClientThread ct = listClient.get(i);
-				// on envoie le message à tous les clients si il y a une erreur on supprime le client
-				if(!ct.writeMsg(messageLf)) {
-					listClient.remove(i);
-					print("Le client  " + ct.getNomUtilisateur() + " est déconnecter . ");
+				// on regarde si le client est dans le même channel
+				if(ct.getSalon().equals(salon) && !ct.equals(expediteur)) {
+					// on envoie le message à au client si il y a une erreur on le supprime
+					if(!ct.writeMsg(messageLf)) {
+						listClient.remove(i);
+						print("Le client  " + ct.getNomUtilisateur() + " est déconnecter . ");
+					}
 				}
 			}
 		}
 		return true;
-		
-		
 	}
 
 	// si un client se déconnecte on le supprime de la liste
@@ -172,32 +180,34 @@ public class Server {
 				break;
 			}
 		}
-		envoieClient(clientdeco + " à quitte le chat.");
+		envoieClient(clientdeco + " à quitte le chat.","", null);
 	}
 	
 	// le thread du serveur
 	public static void main(String[] args) {
 		// on démarre le serveur sur le port 1500 par défault
 		int portNumber = 1500;
+		String addresse = "localhost";
 		switch(args.length) {
 			case 1:
 				try {
 					portNumber = Integer.parseInt(args[0]);
+					addresse = args[1];
+					System.out.println("Le serveur est lancé sur le port: " + portNumber + " et sur l'adresse: " + addresse);
 				}
 				catch(Exception e) {
 					System.out.println("Le port doit être constituer de numéro.");
-					System.out.println("Rappel pour changer le port par défault faite: > java Server [port] sans les crochets");
+					System.out.println("Rappel pour changer le port par défault faite: > java Server [port] [adresse] sans les crochets");
+					System.out.println("Le serveur est lancé sur le port: " + portNumber + " et sur l'adresse: " + addresse +e);
+
 					return;
 				}
 			case 0:
 				break;
-			default:
-				System.out.println("Rappel pour changer le port par défault faite: java Server [port] sans les crochets");
-				return;
-				
+	
 		}
 		// create a server object and start it
-		Server server = new Server(portNumber);
+		Server server = new Server(portNumber,addresse);
 		server.start();
 	}
 }
