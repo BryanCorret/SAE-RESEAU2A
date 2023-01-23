@@ -142,11 +142,13 @@ public class Client  {
 		if(!client.start())
 			return;
 		
-		System.out.println("\nBienvenue sur .! Le lieu de discussion des nerds.");
+		System.out.println("\nBienvenue sur la messagerie ! Le lieu de discussion des nerds.");
 		System.out.println("Voici un bref résumer:");
 		System.out.println("1. Par défault quand vous envoyer un message, vous l'envoyer à tout le monde");
 		System.out.println("2. Pour envoyer un message privé faite '@nomutilisater votre-message' sans les cotes évidemment :)");
 		System.out.println("3. Pour savoir qui est présent dans le salon fait la commandes 'WHO_HERE' sans les cotes encore une fois");
+		System.out.println("4. Pour afficher tous les salon faites 'DISPLAYROOMS ");
+		System.out.println("4. Pour créé rejoindre ou delete un salon faites : 'CREATEROOM', 'JOINROOM' ou 'DELETEROOM' ");
 		System.out.println("4. Enfin pour te déconnecter en toute tranquilité fait 'LOGOUT' ");
 		
 		while(true) {
@@ -160,7 +162,7 @@ public class Client  {
 			}
 			// Si c'est la commande message WHO_HERE permet de savoir qui est présent 
 			else if(msg.equals("WHO_HERE")) {
-				System.out.print("Dans quelle salon voulez vous savoir ? appuyer sur entrer directement si vous savoir sur l'addresse choisi \n> ");
+				System.out.print("Dans quelle salon voulez vous savoir ? appuyer sur entrer directement si vous voulez savoir pour tout les salon ouvert \n> ");
 				String salon = scan.nextLine();
 				client.envoieMsg(new Commande(Commande.WHO_HERE, salon));
 			}
@@ -176,7 +178,7 @@ public class Client  {
 				String salon = scan.nextLine();
 				client.envoieMsg(new Commande(Commande.JOINROOM, salon));
 			}
-			else if(msg.equals("DISPLAYROOM")) {
+			else if(msg.equals("DISPLAYROOMS")) {
 				client.envoieMsg(new Commande(Commande.DISPLAYROOM, ""));
 			}
 			// Si c'est la commande message DELETEROOM permet de supprimer un salon
